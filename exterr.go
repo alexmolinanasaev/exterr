@@ -48,6 +48,14 @@ func New(msg string) ErrExtender {
 	}
 }
 
+func NewWithErr(msg string, err error) ErrExtender {
+	msg = fmt.Sprintf("%s: %s", msg, err)
+	return &extendedErr{
+		msg:   msg,
+		where: where(),
+	}
+}
+
 func NewWithAlt(msg, altMsg string) ErrExtender {
 	return &extendedErr{
 		msg:    msg,
