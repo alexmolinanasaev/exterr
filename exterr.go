@@ -1,7 +1,9 @@
 package exterr
 
 import (
+	"encoding/json"
 	"fmt"
+	"path"
 	"runtime"
 	"strings"
 )
@@ -15,7 +17,9 @@ type ErrType int
 
 type ErrExtender interface {
 	Wrap(w ErrExtender)
-	Trace() string
+	TraceTagged() string
+	TracePretty() string
+	TraceRaw() string
 	AddTrace() ErrExtender
 	Error() string
 	AltError() string
@@ -27,6 +31,14 @@ type extendedErr struct {
 	altMsg  string
 	where   string
 	errType ErrType
+}
+
+type PrettyTrace struct {
+	Package  string       `json:"package"`
+	File     string       `json:"file"`
+	Function string       `json:"function"`
+	Line     string       `json:"line"`
+	Child    *PrettyTrace `json:"child"`
 }
 
 func New(msg string) ErrExtender {
@@ -56,13 +68,54 @@ func NewWithType(msg, altMsg string, t ErrType) ErrExtender {
 func (e *extendedErr) Wrap(w ErrExtender) {
 	e.msg = fmt.Sprintf("%s:%s", e.msg, w.Error())
 	e.altMsg = fmt.Sprintf("%s:%s", e.altMsg, w.AltError())
-	e.where = fmt.Sprintf("%s/%s", where(), w.Trace())
+	e.where = fmt.Sprintf("%s/%s", where(), w.TraceRaw())
 }
 
 // will return trace in formart: packageName:fileName:function:line
 // if trace was wrapped or added, traces will be separated by slash /
-func (e *extendedErr) Trace() string {
+func (e *extendedErr) TraceRaw() string {
 	return e.where
+}
+
+func (e *extendedErr) TraceTagged() string {
+	result := ""
+	parsedFullTrace := strings.Split(e.where, "/")
+	for _, t := range parsedFullTrace {
+		parsedTrace := strings.Split(t, ":")
+		result = path.Join(result, fmt.Sprintf("{pkg}%s:{file}%s:{function}%s:{line}%s",
+			parsedTrace[0], parsedTrace[1], parsedTrace[2], parsedTrace[3]))
+
+	}
+	return result
+}
+
+func (e *extendedErr) TracePretty() string {
+	parsedFullTrace := strings.Split(e.where, "/")
+	parsedTrace := strings.Split(parsedFullTrace[0], ":")
+	prettyTrace := &PrettyTrace{
+		Package:  parsedTrace[0],
+		File:     parsedTrace[1],
+		Function: parsedTrace[2],
+		Line:     parsedTrace[3],
+		Child:    &PrettyTrace{},
+	}
+	currTrace := prettyTrace.Child
+	lastTraceIndex := len(parsedFullTrace)
+	for i, t := range parsedFullTrace[1:] {
+		parsedTrace := strings.Split(t, ":")
+		currTrace.Package = parsedTrace[0]
+		currTrace.File = parsedTrace[1]
+		currTrace.Function = parsedTrace[2]
+		currTrace.Line = parsedTrace[3]
+		if i+2 < lastTraceIndex {
+			currTrace.Child = &PrettyTrace{}
+			currTrace = currTrace.Child
+		}
+	}
+
+	res, _ := json.Marshal(prettyTrace)
+
+	return string(res)
 }
 
 func (e *extendedErr) AddTrace() ErrExtender {

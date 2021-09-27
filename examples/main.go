@@ -30,19 +30,21 @@ func main() {
 
 	err = TraceErr()
 	log.Println(err.Error())
-	log.Println(err.Trace())
+	log.Println(err.TraceTagged())
 	fmt.Println()
 
 	err = Wrap()
 	log.Println(err.Error())
-	log.Println(err.Trace())
+	log.Println(err.TraceTagged())
 	e := exterr.New("wraping err")
 	e.Wrap(err)
 	log.Println(e.Error())
-	log.Println(e.Trace())
+	log.Println(e.TraceTagged())
 	fmt.Println()
 
-	log.Println(AddTrace().Trace())
+	log.Println(AddTraceExample().AddTrace().TraceTagged())
+	log.Println(AddTraceExample().AddTrace().TracePretty())
+
 }
 
 // is simple to create
@@ -76,18 +78,10 @@ func Wrap() exterr.ErrExtender {
 }
 
 // if error will be just passed higher you can add trace manually
-func AddTrace() exterr.ErrExtender {
-	// func1
-	err := func() exterr.ErrExtender {
-		// func2
-		err := func() exterr.ErrExtender {
-			// func3
-			err := func() exterr.ErrExtender {
-				return exterr.New("trace me")
-			}()
-			return err.AddTrace()
-		}()
-		return err.AddTrace()
-	}()
-	return err.AddTrace()
+func AddTraceExample() exterr.ErrExtender {
+	return f1().AddTrace()
 }
+
+func f1() exterr.ErrExtender { return f2().AddTrace() }
+func f2() exterr.ErrExtender { return f3().AddTrace() }
+func f3() exterr.ErrExtender { return exterr.New("trace me") }
