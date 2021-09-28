@@ -50,15 +50,14 @@ func New(msg string) ErrExtender {
 
 func Newf(format string, a ...interface{}) ErrExtender {
 	return &extendedErr{
-		msg:   fmt.Sprintf(format, a...),
+		msg:   fmt.Errorf(format, a...).Error(),
 		where: where(),
 	}
 }
 
 func NewWithErr(msg string, err error) ErrExtender {
-	msg = fmt.Sprintf("%s: %s", msg, err)
 	return &extendedErr{
-		msg:   msg,
+		msg:   fmt.Sprintf("%s: %s", msg, err),
 		where: where(),
 	}
 }
