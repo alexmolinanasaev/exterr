@@ -85,7 +85,7 @@ func (e *extendedErr) Wrap(w ErrExtender) {
 	e.where = fmt.Sprintf("%s/%s", where(), w.TraceRaw())
 }
 
-// will return trace in formart: packageName:fileName:function:line
+// will return trace in format: packageName:fileName:function:line
 // if trace was wrapped or added, traces will be separated by slash /
 func (e *extendedErr) TraceRaw() string {
 	return e.where
