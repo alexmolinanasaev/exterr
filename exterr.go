@@ -133,7 +133,12 @@ func (e *extendedErr) TracePretty() string {
 }
 
 func (e *extendedErr) AddTrace() ErrExtender {
-	e.where = fmt.Sprintf("%s/%s", where(), e.where)
+	w := where()
+	colonIndex := strings.LastIndex(w, ":")
+	searchString := w[:colonIndex]
+	if !strings.Contains(e.where, searchString) {
+		e.where = fmt.Sprintf("%s/%s", where(), e.where)
+	}
 	return e
 }
 
@@ -153,17 +158,13 @@ func where() string {
 	pc, file, line, _ := runtime.Caller(exterrTraceSkip)
 	function := runtime.FuncForPC(pc).Name()
 
-	funcIndex := strings.LastIndex(function, "exterr")
-	if funcIndex < 0 {
-		funcIndex = 0
-	} else {
-		funcIndex += exterrPackageSkip
-	}
-	function = function[funcIndex:]
+	slashIndex := strings.LastIndex(function, "/")
+	function = function[slashIndex+1:]
 
-	dotIndex := strings.LastIndex(function, ".")
-	packageName := function[:dotIndex]
-	function = function[dotIndex+1:]
+	t := strings.Split(function, ".")
+	packageName := t[0]
+
+	function = t[1]
 
 	fileIndex := strings.LastIndex(file, "/")
 	fileName := file[fileIndex+1:]
