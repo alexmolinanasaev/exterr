@@ -42,7 +42,7 @@ func main() {
 	log.Println(e.TraceTagged())
 	fmt.Println()
 
-	log.Println(AddTraceExample().AddTrace().TraceTagged())
+	log.Println(AddTraceExample().AddTrace().TraceRaw())
 	log.Println(AddTraceExample().AddTrace().TracePretty())
 
 }
