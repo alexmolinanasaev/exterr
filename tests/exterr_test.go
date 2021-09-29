@@ -26,9 +26,9 @@ func TestTrace(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	expectedJSONTrace := "{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"TestTrace\",\"line\":\"21\",\"child\":{\"package\":\"\",\"file\":\"\",\"function\":\"\",\"line\":\"\",\"child\":null}}"
-	if expectedJSONTrace != err.TracePretty() {
+	if expectedJSONTrace != err.TraceJSON() {
 		t.Logf("Expected JSON: %s\n", expectedJSONTrace)
-		t.Logf("Got JSON: %s\n", err.TracePretty())
+		t.Logf("Got JSON: %s\n", err.TraceJSON())
 		t.Errorf(err.Error())
 	}
 }
@@ -42,9 +42,9 @@ func TestMultiTrace(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	expectedJSONTrace := "{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"MultiTraceFunc1\",\"line\":\"53\",\"child\":{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"MultiTraceFunc3\",\"line\":\"61\",\"child\":null}}"
-	if expectedJSONTrace != err.TracePretty() {
+	if expectedJSONTrace != err.TraceJSON() {
 		t.Logf("Expected JSON: %s\n", expectedJSONTrace)
-		t.Logf("Got JSON: %s\n", err.TracePretty())
+		t.Logf("Got JSON: %s\n", err.TraceJSON())
 		t.Errorf(err.Error())
 	}
 }
@@ -70,9 +70,9 @@ func TestMultiCheckTrace(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	expectedJSONTrace := "{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"MultiCheckTraceFunc1\",\"line\":\"96\",\"child\":{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"MultiCheckTraceFunc3\",\"line\":\"104\",\"child\":null}}"
-	if expectedJSONTrace != err.TracePretty() {
+	if expectedJSONTrace != err.TraceJSON() {
 		t.Logf("Expected JSON: %s\n", expectedJSONTrace)
-		t.Logf("Got JSON: %s\n", err.TracePretty())
+		t.Logf("Got JSON: %s\n", err.TraceJSON())
 		t.Errorf(err.Error())
 	}
 
@@ -85,9 +85,9 @@ func TestMultiCheckTrace(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	expectedJSONTrace = "{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"TestMultiCheckTrace\",\"line\":\"79\",\"child\":{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"MultiCheckTraceFunc1\",\"line\":\"96\",\"child\":{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"MultiCheckTraceFunc3\",\"line\":\"104\",\"child\":null}}}"
-	if expectedJSONTrace != err.TracePretty() {
+	if expectedJSONTrace != err.TraceJSON() {
 		t.Logf("Expected JSON: %s\n", expectedJSONTrace)
-		t.Logf("Got JSON: %s\n", err.TracePretty())
+		t.Logf("Got JSON: %s\n", err.TraceJSON())
 		t.Errorf(err.Error())
 	}
 }
