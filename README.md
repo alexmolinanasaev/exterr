@@ -6,17 +6,17 @@
 
 ## Особенности
 - Соответствие стандартному интерфейсу Error;
-- Возможность добавить код ошибки для удобной для обработки;
+- Возможность добавить код ошибки для более удобной обработки в коде;
 - Возможность добавить альтернативное описание для внешних сервисов;
 - Кастомизированный stacktrace:
   -  Сырой (raw);
   -  Тегированный (tagged);
-  -  В формате JSON (fancy).
+  -  В формате JSON.
 
 
 ## Установка
 ```bash
-$ go get github.com/alexmolinanasaev/exterr
+go get github.com/alexmolinanasaev/exterr
 ```
 
 ## Импорт в проект
@@ -47,23 +47,35 @@ func NewWithAlt(msg, altMsg string) ErrExtender
 // Добавление номера (ErrType) к ошибке
 // Пример: exterr.NewWithType("sql no rows", "user not found", 1005)
 func NewWithType(msg, altMsg string, t ErrType) ErrExtender
+
+// Добавление описания и строки stacktrace к уже существующеу ErrExtender'у
+// Пример: exterr.NewWithExtErr("auth fail", err)
+func NewWithExtErr(msg string, extErr ErrExtender) ErrExtender
 ```
 
 ## Работа со stacktrace
-Начальный stacktrace формирует 1 строку в месте возникновения ошибки и может быть дополнен с помощью функции **AddTrace()**, например:
+Начальный stacktrace формирует 1 строку в месте возникновения ошибки и может быть дополнен:
+ - с помощью функции **NewWithExtErr()** с добавлением описания ошибки
+ - с помощью функции **AddTrace()**
 ```go
 func DatabaseInit() error {
     DB, err := sql.Open("mysql", "user:password@/test_db")
     if err != nil {
-		return exterr.NewWithType("sql connection", "<SQL_CONNECTION_ERROR>", 1001)
+		return exterr.NewWithType("connection problem", "<SQL_CONNECTION_ERROR>", 1001)
 	}
 }
 
 func main() {
     err := DatabaseInit()
     if err != nil {
+        // Вариант #1: с использованием NewWithExtErr() и добавлением описания ошибки
+        // Результат: "db init error:connection problem" и 2 строки stacktrace
+        log.Fatal(NewWithExtErr("db init error", err))
+        
+        // Вариант #2: с использованием AddTrace()
+        // Результат: "connection problem"  и 2 строки stacktrace
         err.AddTrace()
-        log.Fatal(err.Error())
+        log.Fatal(err)
     }
 }
 ```
@@ -71,6 +83,6 @@ func main() {
 ## Тестирование
 Тесты расположены в каталоге **/tests**.
 ```bash
-$ cd tests
-$ go test
+cd tests
+go test
 ```
