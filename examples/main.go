@@ -43,8 +43,7 @@ func main() {
 	fmt.Println()
 
 	log.Println(AddTraceExample().AddTrace().TraceRaw())
-	log.Println(AddTraceExample().AddTrace().TracePretty())
-
+	log.Println(AddTraceExample().AddTrace().TraceJSON())
 }
 
 // is simple to create
