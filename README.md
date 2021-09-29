@@ -74,15 +74,3 @@ func main() {
 $ cd tests
 $ go test
 ```
-
-
-
-
-
-
-
-
-// temp
-Newf(string, {})
-NewWithErr(string, string)
-NewWithAlt(string, string)
