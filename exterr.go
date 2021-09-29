@@ -18,7 +18,7 @@ type ErrType int
 type ErrExtender interface {
 	Wrap(w ErrExtender)
 	TraceTagged() string
-	TracePretty() string
+	TraceJSON() string
 	TraceRaw() string
 	AddTrace() ErrExtender
 	Error() string
@@ -33,12 +33,12 @@ type extendedErr struct {
 	errType ErrType
 }
 
-type PrettyTrace struct {
-	Package  string       `json:"package"`
-	File     string       `json:"file"`
-	Function string       `json:"function"`
-	Line     string       `json:"line"`
-	Child    *PrettyTrace `json:"child"`
+type jsonTrace struct {
+	Package  string     `json:"package"`
+	File     string     `json:"file"`
+	Function string     `json:"function"`
+	Line     string     `json:"line"`
+	Child    *jsonTrace `json:"child"`
 }
 
 func New(msg string) ErrExtender {
@@ -103,17 +103,17 @@ func (e *extendedErr) TraceTagged() string {
 	return result
 }
 
-func (e *extendedErr) TracePretty() string {
+func (e *extendedErr) TraceJSON() string {
 	parsedFullTrace := strings.Split(e.where, "/")
 	parsedTrace := strings.Split(parsedFullTrace[0], ":")
-	prettyTrace := &PrettyTrace{
+	jTrace := &jsonTrace{
 		Package:  parsedTrace[0],
 		File:     parsedTrace[1],
 		Function: parsedTrace[2],
 		Line:     parsedTrace[3],
-		Child:    &PrettyTrace{},
+		Child:    &jsonTrace{},
 	}
-	currTrace := prettyTrace.Child
+	currTrace := jTrace.Child
 	lastTraceIndex := len(parsedFullTrace)
 	for i, t := range parsedFullTrace[1:] {
 		parsedTrace := strings.Split(t, ":")
@@ -122,12 +122,12 @@ func (e *extendedErr) TracePretty() string {
 		currTrace.Function = parsedTrace[2]
 		currTrace.Line = parsedTrace[3]
 		if i+2 < lastTraceIndex {
-			currTrace.Child = &PrettyTrace{}
+			currTrace.Child = &jsonTrace{}
 			currTrace = currTrace.Child
 		}
 	}
 
-	res, _ := json.Marshal(prettyTrace)
+	res, _ := json.Marshal(jTrace)
 
 	return string(res)
 }
