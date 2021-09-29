@@ -44,6 +44,7 @@ func main() {
 
 	log.Println(AddTraceExample().AddTrace().TraceRaw())
 	log.Println(AddTraceExample().AddTrace().TraceJSON())
+	log.Println(NewWithType().AddTrace().ToJSON())
 }
 
 // is simple to create

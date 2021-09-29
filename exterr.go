@@ -33,6 +33,13 @@ type extendedErr struct {
 	errType ErrType
 }
 
+type jsonErr struct {
+	Message    string  `json:"error"`
+	AltMessage string  `json:"altErr"`
+	ErrorType  ErrType `json:"errType"`
+	Traceroute string  `json:"traceroute"`
+}
+
 type jsonTrace struct {
 	Package  string     `json:"package"`
 	File     string     `json:"file"`
@@ -136,6 +143,19 @@ func (e *extendedErr) TraceJSON() string {
 	}
 
 	res, _ := json.Marshal(jTrace)
+
+	return string(res)
+}
+
+func (e *extendedErr) ToJSON() string {
+	jsonErr := &jsonErr{
+		Message:    e.msg,
+		AltMessage: e.altMsg,
+		ErrorType:  e.errType,
+		Traceroute: e.TraceJSON(),
+	}
+
+	res, _ := json.Marshal(jsonErr)
 
 	return string(res)
 }
