@@ -79,6 +79,14 @@ func NewWithType(msg, altMsg string, t ErrType) ErrExtender {
 	}
 }
 
+func NewWithExtErr(msg string, extErr ErrExtender) ErrExtender {
+	extErr.AddTrace()
+	return &extendedErr{
+		msg:   fmt.Sprintf("%s: %s", msg, extErr),
+		where: where(),
+	}
+}
+
 func (e *extendedErr) Wrap(w ErrExtender) {
 	e.msg = fmt.Sprintf("%s:%s", e.msg, w.Error())
 	e.altMsg = fmt.Sprintf("%s:%s", e.altMsg, w.AltError())
