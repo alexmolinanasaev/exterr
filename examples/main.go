@@ -42,9 +42,7 @@ func main() {
 	log.Println(e.TraceTagged())
 	fmt.Println()
 
-	log.Println(AddTraceExample().AddTrace().TraceRaw())
-	log.Println(AddTraceExample().AddTrace().TraceJSON())
-	log.Println(NewWithType().AddTrace().ToJSON())
+	log.Println(AddTraceExample().AddTraceRow().TraceJSON())
 }
 
 // is simple to create
@@ -79,9 +77,9 @@ func Wrap() exterr.ErrExtender {
 
 // if error will be just passed higher you can add trace manually
 func AddTraceExample() exterr.ErrExtender {
-	return f1().AddTrace()
+	return f1().AddTraceRow()
 }
 
-func f1() exterr.ErrExtender { return f2().AddTrace() }
-func f2() exterr.ErrExtender { return f3().AddTrace() }
+func f1() exterr.ErrExtender { return f2().AddTraceRow() }
+func f2() exterr.ErrExtender { return f3().AddTraceRow() }
 func f3() exterr.ErrExtender { return exterr.New("trace me") }
