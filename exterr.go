@@ -18,9 +18,10 @@ type ErrType int
 type ErrExtender interface {
 	Wrap(w ErrExtender)
 	TraceTagged() string
-	TracePretty() string
-	TraceRaw() string
-	AddTrace() ErrExtender
+	TraceJSON() string
+	TraceRawString() string
+	TraceRows() []traceRow
+	AddTraceRow() ErrExtender
 	Error() string
 	AltError() string
 	Type() ErrType
@@ -29,117 +30,146 @@ type ErrExtender interface {
 type extendedErr struct {
 	msg     string
 	altMsg  string
-	where   string
 	errType ErrType
+	trace   []traceRow
 }
 
-type PrettyTrace struct {
-	Package  string       `json:"package"`
-	File     string       `json:"file"`
-	Function string       `json:"function"`
-	Line     string       `json:"line"`
-	Child    *PrettyTrace `json:"child"`
+type traceRow struct {
+	Package  string `json:"package"`
+	File     string `json:"file"`
+	Function string `json:"function"`
+	Line     int    `json:"line"`
 }
 
+// New() create ErrExtender with {msg} message and 1 trace line.
+// Example: err := New("Error message")
 func New(msg string) ErrExtender {
 	return &extendedErr{
 		msg:   msg,
-		where: where(),
+		trace: []traceRow{where()},
 	}
 }
 
+// Newf() create ErrExtender with {msg} message and 1 trace line.
+// Newf() allows you to format numbers, variables and strings into the first {format} parameter you give it
+// Example: err := Newf("Error: %s with code %d", "SQL error", 1005)
 func Newf(format string, a ...interface{}) ErrExtender {
 	return &extendedErr{
 		msg:   fmt.Errorf(format, a...).Error(),
-		where: where(),
+		trace: []traceRow{where()},
 	}
 }
 
+// With NewWithErr() You can join {msg} to {builtin.error} message
+// Example: err := NewWithErr("SQL Error: ", err)
 func NewWithErr(msg string, err error) ErrExtender {
 	return &extendedErr{
 		msg:   fmt.Sprintf("%s: %s", msg, err),
-		where: where(),
+		trace: []traceRow{where()},
 	}
 }
 
+// NewWithAlt() create ErrExtender with main and alternative messages.
+// Example: err := NewWithAlt("SQL connection error", "<SQL_CONNECTION_ERROR>")
 func NewWithAlt(msg, altMsg string) ErrExtender {
 	return &extendedErr{
 		msg:    msg,
-		where:  where(),
 		altMsg: altMsg,
+		trace:  []traceRow{where()},
 	}
 }
 
+// NewWithType() create ErrExtender with ErrType (error code)
+// Example: err := NewWithType("SQL connection error", "<SQL_CONNECTION_ERROR>", ErrType(1005))
 func NewWithType(msg, altMsg string, t ErrType) ErrExtender {
 	return &extendedErr{
 		msg:     msg,
-		where:   where(),
+		trace:   []traceRow{where()},
 		altMsg:  altMsg,
 		errType: t,
 	}
 }
 
+// NewWithExtErr() create new ErrExtender from current {err} ErrExtender object
+// with joining {msg} and {trace} stack
+// Example: err := NewWithExtErr("SQL auth error", err)
+func NewWithExtErr(msg string, err ErrExtender) ErrExtender {
+	return &extendedErr{
+		msg:   fmt.Sprintf("%s: %s", msg, err),
+		trace: append(err.TraceRows(), where()),
+	}
+}
+
+// Wrap() unite two ErrExtender objects
+// Example: err.Wrap(err2)
 func (e *extendedErr) Wrap(w ErrExtender) {
-	e.msg = fmt.Sprintf("%s:%s", e.msg, w.Error())
-	e.altMsg = fmt.Sprintf("%s:%s", e.altMsg, w.AltError())
-	e.where = fmt.Sprintf("%s/%s", where(), w.TraceRaw())
+	e.msg = fmt.Sprintf("%s: %s", e.msg, w.Error())
+	e.altMsg = fmt.Sprintf("%s: %s", e.altMsg, w.AltError())
+	e.trace = append(e.trace, w.TraceRows()...)
 }
 
-// will return trace in format: packageName:fileName:function:line
-// if trace was wrapped or added, traces will be separated by slash /
-func (e *extendedErr) TraceRaw() string {
-	return e.where
-}
-
-func (e *extendedErr) TraceTagged() string {
+// TraceRawString() return string from trace array.
+// Every trace line separated by slash.
+func (e *extendedErr) TraceRawString() string {
+	//trace := reverse(e.trace)
 	result := ""
-	parsedFullTrace := strings.Split(e.where, "/")
-	for _, t := range parsedFullTrace {
-		parsedTrace := strings.Split(t, ":")
-		result = path.Join(result, fmt.Sprintf("{pkg}%s:{file}%s:{function}%s:{line}%s",
-			parsedTrace[0], parsedTrace[1], parsedTrace[2], parsedTrace[3]))
-
+	for _, row := range e.trace {
+		result = path.Join(result, fmt.Sprintf("%s:%s:%s:%d",
+			row.Package, row.File, row.Function, row.Line))
 	}
 	return result
 }
 
-func (e *extendedErr) TracePretty() string {
-	parsedFullTrace := strings.Split(e.where, "/")
-	parsedTrace := strings.Split(parsedFullTrace[0], ":")
-	prettyTrace := &PrettyTrace{
-		Package:  parsedTrace[0],
-		File:     parsedTrace[1],
-		Function: parsedTrace[2],
-		Line:     parsedTrace[3],
-		Child:    &PrettyTrace{},
+// TraceRawString() return tagged string from trace array.
+// Every trace line separated by slash.
+// Format: {pkg}:{file}:{function}:{line}
+func (e *extendedErr) TraceTagged() string {
+	//trace := reverse(e.trace)
+	result := ""
+	for _, row := range e.trace {
+		result = path.Join(result, fmt.Sprintf("{pkg}%s:{file}%s:{function}%s:{line}%d",
+			row.Package, row.File, row.Function, row.Line))
 	}
-	currTrace := prettyTrace.Child
-	lastTraceIndex := len(parsedFullTrace)
-	for i, t := range parsedFullTrace[1:] {
-		parsedTrace := strings.Split(t, ":")
-		currTrace.Package = parsedTrace[0]
-		currTrace.File = parsedTrace[1]
-		currTrace.Function = parsedTrace[2]
-		currTrace.Line = parsedTrace[3]
-		if i+2 < lastTraceIndex {
-			currTrace.Child = &PrettyTrace{}
-			currTrace = currTrace.Child
-		}
-	}
+	return result
+}
 
-	res, _ := json.Marshal(prettyTrace)
-
+// TraceRawString() return JSON-string from trace array.
+func (e *extendedErr) TraceJSON() string {
+	//trace := reverse(e.trace)
+	res, _ := json.Marshal(e.trace)
 	return string(res)
 }
 
-func (e *extendedErr) AddTrace() ErrExtender {
+// AddTraceRow() add new trace line in ErrExtender trace array
+func (e *extendedErr) AddTraceRow() ErrExtender {
 	w := where()
-	colonIndex := strings.LastIndex(w, ":")
-	searchString := w[:colonIndex]
-	if !strings.Contains(e.where, searchString) {
-		e.where = fmt.Sprintf("%s/%s", where(), e.where)
+	r := e.trace[len(e.trace)-1]
+	if w.Package == r.Package && w.Function == r.Function {
+		return e
 	}
+	e.trace = append(e.trace, w)
 	return e
+}
+
+func where() traceRow {
+	pc, file, line, _ := runtime.Caller(exterrTraceSkip)
+	function := runtime.FuncForPC(pc).Name()
+
+	slashIndex := strings.LastIndex(function, "/")
+	function = function[slashIndex+1:]
+
+	s := strings.Split(function, ".")
+	packageName, function := s[0], s[1]
+
+	slashIndex = strings.LastIndex(file, "/")
+	fileName := file[slashIndex+1:]
+
+	return traceRow{
+		Package:  packageName,
+		File:     fileName,
+		Function: function,
+		Line:     line,
+	}
 }
 
 func (e *extendedErr) Error() string {
@@ -154,20 +184,16 @@ func (e *extendedErr) Type() ErrType {
 	return e.errType
 }
 
-func where() string {
-	pc, file, line, _ := runtime.Caller(exterrTraceSkip)
-	function := runtime.FuncForPC(pc).Name()
+func (e *extendedErr) TraceRows() []traceRow {
+	return e.trace
+}
 
-	slashIndex := strings.LastIndex(function, "/")
-	function = function[slashIndex+1:]
-
-	t := strings.Split(function, ".")
-	packageName := t[0]
-
-	function = t[1]
-
-	fileIndex := strings.LastIndex(file, "/")
-	fileName := file[fileIndex+1:]
-
-	return fmt.Sprintf("%s:%s:%s:%d", packageName, fileName, function, line)
+// [NOT USED]
+// Reverse trace array
+func reverse(array []traceRow) []traceRow {
+	for i := 0; i < len(array)/2; i++ {
+		j := len(array) - i - 1
+		array[i], array[j] = array[j], array[i]
+	}
+	return array
 }
