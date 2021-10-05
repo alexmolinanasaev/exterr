@@ -91,7 +91,7 @@ func NewWithType(msg, altMsg string, t ErrType) ErrExtender {
 }
 
 // NewWithExtErr() create new ErrExtender from current {err} ErrExtender object
-// with joining {msg} and {trace} stack
+// with joining {msg} {altMsg} {errType} and {trace} stack
 // Example: err := NewWithExtErr("SQL auth error", err)
 func NewWithExtErr(msg string, err ErrExtender) ErrExtender {
 	return &extendedErr{
