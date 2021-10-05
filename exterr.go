@@ -95,8 +95,10 @@ func NewWithType(msg, altMsg string, t ErrType) ErrExtender {
 // Example: err := NewWithExtErr("SQL auth error", err)
 func NewWithExtErr(msg string, err ErrExtender) ErrExtender {
 	return &extendedErr{
-		msg:   fmt.Sprintf("%s: %s", msg, err),
-		trace: append(err.TraceRows(), where()),
+		msg:     fmt.Sprintf("%s: %s", msg, err),
+		altMsg:  err.AltError(),
+		errType: err.Type(),
+		trace:   append(err.TraceRows(), where()),
 	}
 }
 
@@ -190,10 +192,10 @@ func (e *extendedErr) TraceRows() []traceRow {
 
 // [NOT USED]
 // Reverse trace array
-func reverse(array []traceRow) []traceRow {
-	for i := 0; i < len(array)/2; i++ {
-		j := len(array) - i - 1
-		array[i], array[j] = array[j], array[i]
-	}
-	return array
-}
+// func reverse(array []traceRow) []traceRow {
+// 	for i := 0; i < len(array)/2; i++ {
+// 		j := len(array) - i - 1
+// 		array[i], array[j] = array[j], array[i]
+// 	}
+// 	return array
+// }
