@@ -16,7 +16,7 @@ const (
 type ErrType int
 
 type ErrExtender interface {
-	Wrap(w ErrExtender)
+	Wrap(w ErrExtender) ErrExtender
 	TraceTagged() string
 	TraceJSON() string
 	TraceRawString() string
@@ -104,10 +104,12 @@ func NewWithExtErr(msg string, err ErrExtender) ErrExtender {
 
 // Wrap() unite two ErrExtender objects
 // Example: err.Wrap(err2)
-func (e *extendedErr) Wrap(w ErrExtender) {
+func (e *extendedErr) Wrap(w ErrExtender) ErrExtender {
 	e.msg = fmt.Sprintf("%s: %s", e.msg, w.Error())
 	e.altMsg = fmt.Sprintf("%s: %s", e.altMsg, w.AltError())
+	e.errType = w.Type()
 	e.trace = append(e.trace, w.TraceRows()...)
+	return e
 }
 
 // TraceRawString() return string from trace array.
