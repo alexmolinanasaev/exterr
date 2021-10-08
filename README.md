@@ -52,9 +52,9 @@ func NewWithType(msg, altMsg string, t ErrType) ErrExtender
 // Пример: exterr.NewWithExtErr("auth fail", err)
 func NewWithExtErr(msg string, extErr ErrExtender) ErrExtender
 
-// Функция добавляет содержимое сообщений и массив stacktrace'а от другого ErrExtender'а
+// Функция добавляет содержимое другого ErrExtender'а
 // Пример: err.Wrap(err2)
-func (e *extendedErr) Wrap(w ErrExtender)
+func (e *extendedErr) Wrap(w ErrExtender) ErrExtender
 
 // Вывод stacktrace в виде строки, где все строки stacktrace разделены символом '/'
 // Формат: пакет:файл:функция:номер_строки
