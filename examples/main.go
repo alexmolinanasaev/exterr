@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	internalServerErrorType exterr.ErrType = 1
+	internalServerErrorType = 1
 )
 
 func main() {
@@ -16,12 +16,12 @@ func main() {
 	fmt.Println()
 
 	log.Println(NewWithAlt().Error())
-	log.Println(NewWithAlt().AltError())
+	log.Println(NewWithAlt().GetAltMsg())
 	fmt.Println()
 
 	err := NewWithType()
-	if err.Type() == internalServerErrorType {
-		log.Println(err.AltError())
+	if err.GetErrCode() == internalServerErrorType {
+		log.Println(err.GetAltMsg())
 	}
 	fmt.Println()
 
@@ -43,6 +43,8 @@ func main() {
 	fmt.Println()
 
 	log.Println(AddTraceExample().AddTraceRow().TraceJSON())
+	log.Println()
+	log.Println(exterr.New("TestError").SetErrCode(1000).TraceJSON())
 }
 
 // is simple to create
