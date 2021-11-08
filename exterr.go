@@ -39,7 +39,7 @@ type traceRow struct {
 	Line     int    `json:"line"`
 }
 
-// TODO: Дублирование функицонала с дублирование функционала AddMsg
+// TODO: @VGulsenikov - нет смысла изменять файлы после инициализации, изменения удобнее и правктичнее писать в altMsg
 // SetMsg - для изменения поля msg на передаваемую строку `msg`
 func (e *extendedErr) SetMsg(msg string) ErrExtender {
 	e.msg = msg
@@ -101,7 +101,7 @@ func (e *extendedErr) AddTraceRow() ErrExtender {
 	return e
 }
 
-// TraceRawString() return string from trace array.
+// TraceRawString - return string from trace array.
 // Every trace line separated by slash.
 func (e *extendedErr) TraceRawString() string {
 	result := ""
@@ -112,7 +112,7 @@ func (e *extendedErr) TraceRawString() string {
 	return result
 }
 
-// TraceTagged() return tagged string from trace array.
+// TraceTagged - return tagged string from trace array.
 // Every trace line separated by slash.
 // Format: {pkg}:{file}:{function}:{line}
 func (e *extendedErr) TraceTagged() string {
@@ -124,13 +124,13 @@ func (e *extendedErr) TraceTagged() string {
 	return result
 }
 
-// TraceJSON() return JSON-string from trace array.
+// TraceJSON - return JSON-string from trace array.
 func (e *extendedErr) TraceJSON() string {
 	res, _ := json.Marshal(e.trace)
 	return string(res)
 }
 
-// Wrap() unite two ErrExtender objects
+// Wrap - unite two ErrExtender objects
 // Example: err.Wrap(err2)
 func (e *extendedErr) Wrap(w ErrExtender) ErrExtender {
 	e.msg = fmt.Sprintf("%s: %s", e.msg, w.Error())
@@ -140,7 +140,7 @@ func (e *extendedErr) Wrap(w ErrExtender) ErrExtender {
 	return e
 }
 
-// New() create ErrExtender with {msg} message and 1 trace line.
+// New - create ErrExtender with {msg} message and 1 trace line.
 // Example: err := New("Error message")
 func New(msg string) ErrExtender {
 	return &extendedErr{
