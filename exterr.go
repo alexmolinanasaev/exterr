@@ -59,6 +59,7 @@ func (e *extendedErr) SetErrCode(code int) ErrExtender {
 }
 
 // Error - получение основного сообщения ошибки
+
 func (e *extendedErr) Error() string {
 	return e.msg
 }
