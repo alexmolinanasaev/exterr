@@ -39,50 +39,58 @@ type traceRow struct {
 	Line     int    `json:"line"`
 }
 
+// TODO: Дублирование функицонала с дублирование функционала AddMsg
+// SetMsg - для изменения поля msg на передаваемую строку `msg`
 func (e *extendedErr) SetMsg(msg string) ErrExtender {
 	e.msg = msg
 	return e
 }
 
+// SetAltMsg - для изменения поля altMsg на передаваемую строку `altMsg`
 func (e *extendedErr) SetAltMsg(altMsg string) ErrExtender {
 	e.altMsg = altMsg
 	return e
 }
 
+// SetErrCode - для изменения кода ошибки errCode на передаваемое число `code`
 func (e *extendedErr) SetErrCode(code int) ErrExtender {
 	e.errCode = code
 	return e
 }
 
+// Error - получение основного сообщения ошибки
 func (e *extendedErr) Error() string {
 	return e.msg
 }
 
+// GetAltMsg - получение альтернативного сообщения ошибки
 func (e *extendedErr) GetAltMsg() string {
 	return e.altMsg
 }
 
+// GetErrCode - получение кода ошибки
 func (e *extendedErr) GetErrCode() int {
 	return e.errCode
 }
 
+// GetTraceRows - получение списка объектов traceRow
 func (e *extendedErr) GetTraceRows() []traceRow {
 	return e.trace
 }
 
-// AddMsg() add text to the beginning of the message
+// AddMsg - add text to the beginning of the message
 func (e *extendedErr) AddMsg(msg string) ErrExtender {
 	e.msg = fmt.Sprintf("%s: %s", msg, e.msg)
 	return e
 }
 
-// AddAltMsg() add text to the beginning of the alternative message
+// AddAltMsg - add text to the beginning of the alternative message
 func (e *extendedErr) AddAltMsg(altMsg string) ErrExtender {
 	e.altMsg = fmt.Sprintf("%s: %s", altMsg, e.altMsg)
 	return e
 }
 
-// AddTraceRow() add new trace line in ErrExtender trace array
+// AddTraceRow - add new trace line in ErrExtender trace array
 func (e *extendedErr) AddTraceRow() ErrExtender {
 	w := where()
 	r := e.trace[len(e.trace)-1]
@@ -104,7 +112,7 @@ func (e *extendedErr) TraceRawString() string {
 	return result
 }
 
-// TraceRawString() return tagged string from trace array.
+// TraceTagged() return tagged string from trace array.
 // Every trace line separated by slash.
 // Format: {pkg}:{file}:{function}:{line}
 func (e *extendedErr) TraceTagged() string {
@@ -116,7 +124,7 @@ func (e *extendedErr) TraceTagged() string {
 	return result
 }
 
-// TraceRawString() return JSON-string from trace array.
+// TraceJSON() return JSON-string from trace array.
 func (e *extendedErr) TraceJSON() string {
 	res, _ := json.Marshal(e.trace)
 	return string(res)
@@ -206,6 +214,7 @@ func where() traceRow {
 	slashIndex = strings.LastIndex(file, "/")
 	fileName := file[slashIndex+1:]
 
+	// TODO: Можно ли использовать указаль?
 	return traceRow{
 		Package:  packageName,
 		File:     fileName,
