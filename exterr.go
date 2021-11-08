@@ -63,6 +63,11 @@ func (e *extendedErr) Error() string {
 	return e.msg
 }
 
+// ErrorEx - получение: основного сообщения, альтернативного сообщения, кода ошибки.
+func (e *extendedErr) ErrorEx() (string, string, int) {
+	return e.msg, e.altMsg, e.errCode
+}
+
 // GetAltMsg - получение альтернативного сообщения ошибки
 func (e *extendedErr) GetAltMsg() string {
 	return e.altMsg
