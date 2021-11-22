@@ -8,29 +8,27 @@ import (
 	"strings"
 )
 
-const (
-	exterrTraceSkip   int = 2
-	exterrPackageSkip int = 7
-)
-
-type ErrType int
-
 type ErrExtender interface {
-	Wrap(w ErrExtender) ErrExtender
+	SetMsg(msg string) ErrExtender
+	SetAltMsg(altMsg string) ErrExtender
+	SetErrCode(code int) ErrExtender
+	Error() string
+	GetAltMsg() string
+	GetErrCode() int
+	GetTraceRows() []traceRow
+	AddMsg(msg string) ErrExtender
+	AddAltMsg(msg string) ErrExtender
+	AddTraceRow() ErrExtender
 	TraceTagged() string
 	TraceJSON() string
 	TraceRawString() string
-	TraceRows() []traceRow
-	AddTraceRow() ErrExtender
-	Error() string
-	AltError() string
-	Type() ErrType
+	Wrap(w ErrExtender) ErrExtender
 }
 
 type extendedErr struct {
 	msg     string
 	altMsg  string
-	errType ErrType
+	errCode int
 	trace   []traceRow
 }
 
@@ -41,7 +39,113 @@ type traceRow struct {
 	Line     int    `json:"line"`
 }
 
-// New() create ErrExtender with {msg} message and 1 trace line.
+// TODO: @VGulsenikov - нет смысла изменять файлы после инициализации, изменения удобнее и правктичнее писать в altMsg
+// SetMsg - для изменения поля msg на передаваемую строку `msg`
+func (e *extendedErr) SetMsg(msg string) ErrExtender {
+	e.msg = msg
+	return e
+}
+
+// SetAltMsg - для изменения поля altMsg на передаваемую строку `altMsg`
+func (e *extendedErr) SetAltMsg(altMsg string) ErrExtender {
+	e.altMsg = altMsg
+	return e
+}
+
+// SetErrCode - для изменения кода ошибки errCode на передаваемое число `code`
+func (e *extendedErr) SetErrCode(code int) ErrExtender {
+	e.errCode = code
+	return e
+}
+
+// Error - получение основного сообщения ошибки
+func (e *extendedErr) Error() string {
+	return e.msg
+}
+
+// ErrorEx - получение: основного сообщения, альтернативного сообщения, кода ошибки.
+func (e *extendedErr) ErrorEx() (string, string, int) {
+	return e.msg, e.altMsg, e.errCode
+}
+
+// GetAltMsg - получение альтернативного сообщения ошибки
+func (e *extendedErr) GetAltMsg() string {
+	return e.altMsg
+}
+
+// GetErrCode - получение кода ошибки
+func (e *extendedErr) GetErrCode() int {
+	return e.errCode
+}
+
+// GetTraceRows - получение списка объектов traceRow
+func (e *extendedErr) GetTraceRows() []traceRow {
+	return e.trace
+}
+
+// AddMsg - add text to the beginning of the message
+func (e *extendedErr) AddMsg(msg string) ErrExtender {
+	e.msg = fmt.Sprintf("%s: %s", msg, e.msg)
+	return e
+}
+
+// AddAltMsg - add text to the beginning of the alternative message
+func (e *extendedErr) AddAltMsg(altMsg string) ErrExtender {
+	e.altMsg = fmt.Sprintf("%s: %s", altMsg, e.altMsg)
+	return e
+}
+
+// AddTraceRow - add new trace line in ErrExtender trace array
+func (e *extendedErr) AddTraceRow() ErrExtender {
+	w := where()
+	r := e.trace[len(e.trace)-1]
+	if w.Package == r.Package && w.Function == r.Function {
+		return e
+	}
+	e.trace = append(e.trace, w)
+	return e
+}
+
+// TraceRawString - return string from trace array.
+// Every trace line separated by slash.
+func (e *extendedErr) TraceRawString() string {
+	result := ""
+	for _, row := range e.trace {
+		result = path.Join(result, fmt.Sprintf("%s:%s:%s:%d",
+			row.Package, row.File, row.Function, row.Line))
+	}
+	return result
+}
+
+// TraceTagged - return tagged string from trace array.
+// Every trace line separated by slash.
+// Format: {pkg}:{file}:{function}:{line}
+func (e *extendedErr) TraceTagged() string {
+	result := ""
+	for _, row := range e.trace {
+		result = path.Join(result, fmt.Sprintf("{pkg}%s:{file}%s:{function}%s:{line}%d",
+			row.Package, row.File, row.Function, row.Line))
+	}
+	return result
+}
+
+// TraceJSON - return JSON-string from trace array.
+func (e *extendedErr) TraceJSON() string {
+	res, _ := json.Marshal(e.trace)
+	return string(res)
+}
+
+// Wrap - unite two ErrExtender objects
+// Example: err.Wrap(err2)
+func (e *extendedErr) Wrap(w ErrExtender) ErrExtender {
+	e.msg = fmt.Sprintf("%s: %s", e.msg, w.Error())
+	e.altMsg = fmt.Sprintf("%s: %s", e.altMsg, w.GetAltMsg())
+	e.errCode = w.GetErrCode()
+	e.trace = append(e.trace, w.GetTraceRows()...)
+	return e
+}
+
+// New - create ErrExtender with {msg} message and 1 trace line.
 // Example: err := New("Error message")
 func New(msg string) ErrExtender {
 	return &extendedErr{
@@ -81,12 +185,12 @@ func NewWithAlt(msg, altMsg string) ErrExtender {
 
 // NewWithType() create ErrExtender with ErrType (error code)
 // Example: err := NewWithType("SQL connection error", "<SQL_CONNECTION_ERROR>", ErrType(1005))
-func NewWithType(msg, altMsg string, t ErrType) ErrExtender {
+func NewWithType(msg, altMsg string, t int) ErrExtender {
 	return &extendedErr{
 		msg:     msg,
 		trace:   []traceRow{where()},
 		altMsg:  altMsg,
-		errType: t,
+		errCode: t,
 	}
 }
 
@@ -96,67 +200,14 @@ func NewWithType(msg, altMsg string, t ErrType) ErrExtender {
 func NewWithExtErr(msg string, err ErrExtender) ErrExtender {
 	return &extendedErr{
 		msg:     fmt.Sprintf("%s: %s", msg, err),
-		altMsg:  err.AltError(),
-		errType: err.Type(),
-		trace:   append(err.TraceRows(), where()),
+		altMsg:  err.GetAltMsg(),
+		errCode: err.GetErrCode(),
+		trace:   append(err.GetTraceRows(), where()),
 	}
-}
-
-// Wrap() unite two ErrExtender objects
-// Example: err.Wrap(err2)
-func (e *extendedErr) Wrap(w ErrExtender) ErrExtender {
-	e.msg = fmt.Sprintf("%s: %s", e.msg, w.Error())
-	e.altMsg = fmt.Sprintf("%s: %s", e.altMsg, w.AltError())
-	e.errType = w.Type()
-	e.trace = append(e.trace, w.TraceRows()...)
-	return e
-}
-
-// TraceRawString() return string from trace array.
-// Every trace line separated by slash.
-func (e *extendedErr) TraceRawString() string {
-	//trace := reverse(e.trace)
-	result := ""
-	for _, row := range e.trace {
-		result = path.Join(result, fmt.Sprintf("%s:%s:%s:%d",
-			row.Package, row.File, row.Function, row.Line))
-	}
-	return result
-}
-
-// TraceRawString() return tagged string from trace array.
-// Every trace line separated by slash.
-// Format: {pkg}:{file}:{function}:{line}
-func (e *extendedErr) TraceTagged() string {
-	//trace := reverse(e.trace)
-	result := ""
-	for _, row := range e.trace {
-		result = path.Join(result, fmt.Sprintf("{pkg}%s:{file}%s:{function}%s:{line}%d",
-			row.Package, row.File, row.Function, row.Line))
-	}
-	return result
-}
-
-// TraceRawString() return JSON-string from trace array.
-func (e *extendedErr) TraceJSON() string {
-	//trace := reverse(e.trace)
-	res, _ := json.Marshal(e.trace)
-	return string(res)
-}
-
-// AddTraceRow() add new trace line in ErrExtender trace array
-func (e *extendedErr) AddTraceRow() ErrExtender {
-	w := where()
-	r := e.trace[len(e.trace)-1]
-	if w.Package == r.Package && w.Function == r.Function {
-		return e
-	}
-	e.trace = append(e.trace, w)
-	return e
 }
 
 func where() traceRow {
-	pc, file, line, _ := runtime.Caller(exterrTraceSkip)
+	pc, file, line, _ := runtime.Caller(2)
 	function := runtime.FuncForPC(pc).Name()
 
 	slashIndex := strings.LastIndex(function, "/")
@@ -168,6 +219,7 @@ func where() traceRow {
 	slashIndex = strings.LastIndex(file, "/")
 	fileName := file[slashIndex+1:]
 
+	// TODO: Можно ли использовать указаль?
 	return traceRow{
 		Package:  packageName,
 		File:     fileName,
@@ -175,29 +227,3 @@ func where() traceRow {
 		Line:     line,
 	}
 }
-
-func (e *extendedErr) Error() string {
-	return e.msg
-}
-
-func (e *extendedErr) AltError() string {
-	return e.altMsg
-}
-
-func (e *extendedErr) Type() ErrType {
-	return e.errType
-}
-
-func (e *extendedErr) TraceRows() []traceRow {
-	return e.trace
-}
-
-// [NOT USED]
-// Reverse trace array
-// func reverse(array []traceRow) []traceRow {
-// 	for i := 0; i < len(array)/2; i++ {
-// 		j := len(array) - i - 1
-// 		array[i], array[j] = array[j], array[i]
-// 	}
-// 	return array
-// }

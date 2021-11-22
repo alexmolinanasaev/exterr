@@ -41,7 +41,7 @@ func TestNewWithAlt(t *testing.T) {
 		{"AltError", "", false},
 	} {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			result := exterr.NewWithAlt("Error", tt.in).AltError()
+			result := exterr.NewWithAlt("Error", tt.in).GetAltMsg()
 			if (result == tt.out) != tt.isCorrect {
 				t.Error(errMessage(tt.out, result))
 			}
@@ -62,8 +62,8 @@ func TestNewWithType(t *testing.T) {
 		{-100, -100, true},
 	} {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			result := exterr.NewWithType("Error", "AltError", exterr.ErrType(tt.in)).Type()
-			if (result == exterr.ErrType(tt.out)) != tt.isCorrect {
+			result := exterr.NewWithType("Error", "AltError", tt.in)
+			if (result.GetErrCode() == tt.out) != tt.isCorrect {
 				t.Error(errMessage(tt.out, result))
 			}
 		})
@@ -136,7 +136,7 @@ func TestWrapAltMsg(t *testing.T) {
 			err2 := exterr.NewWithAlt("Error", tt.in2)
 			err := exterr.NewWithAlt("Error", tt.in1)
 			err.Wrap(err2)
-			result := err.AltError()
+			result := err.GetAltMsg()
 
 			if (result == tt.out) != tt.isCorrect {
 				t.Error(errMessage(tt.out, result))
