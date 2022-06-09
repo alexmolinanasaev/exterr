@@ -153,8 +153,9 @@ func (e *extendedErr) TraceJSON() string {
 // Example: err := New("Error message")
 func New(msg string) ErrExtender {
 	return &extendedErr{
-		ErrError: msg,
-		trace:    []string{where()},
+		ErrStatus: http.StatusInternalServerError,
+		ErrError:  msg,
+		trace:     []string{where()},
 	}
 }
 
@@ -163,8 +164,9 @@ func New(msg string) ErrExtender {
 // Example: err := Newf("Error: %s with code %d", "SQL error", 1005)
 func Newf(format string, a ...interface{}) ErrExtender {
 	return &extendedErr{
-		ErrError: fmt.Errorf(format, a...).Error(),
-		trace:    []string{where()},
+		ErrStatus: http.StatusInternalServerError,
+		ErrError:  fmt.Errorf(format, a...).Error(),
+		trace:     []string{where()},
 	}
 }
 
@@ -187,8 +189,9 @@ func Wrap(msg string, err error) ErrExtender {
 // Example: err := NewWithErr("SQL Error: ", err)
 func NewWithErr(msg string, err error) ErrExtender {
 	return &extendedErr{
-		ErrError: fmt.Sprintf("%s: %s", msg, err),
-		trace:    []string{where()},
+		ErrStatus: http.StatusInternalServerError,
+		ErrError:  fmt.Sprintf("%s: %s", msg, err),
+		trace:     []string{where()},
 	}
 }
 
@@ -196,9 +199,10 @@ func NewWithErr(msg string, err error) ErrExtender {
 // Example: err := NewWithAlt("SQL connection error", "<SQL_CONNECTION_ERROR>")
 func NewWithAlt(err, msg string) ErrExtender {
 	return &extendedErr{
-		ErrError: err,
-		ErrMsg:   msg,
-		trace:    []string{where()},
+		ErrStatus: http.StatusInternalServerError,
+		ErrError:  err,
+		ErrMsg:    msg,
+		trace:     []string{where()},
 	}
 }
 
@@ -219,9 +223,9 @@ func NewWithType(err error, causes string, msg string, t int) ErrExtender {
 // Example: err := NewWithExtErr("SQL auth error", err)
 func NewWithExtErr(msg string, err ErrExtender) ErrExtender {
 	return &extendedErr{
+		ErrStatus: err.GetErrCode(),
 		ErrError:  fmt.Sprintf("%s: %s", msg, err),
 		ErrMsg:    err.GetAltMsg(),
-		ErrStatus: err.GetErrCode(),
 		trace:     nil,
 	}
 }
