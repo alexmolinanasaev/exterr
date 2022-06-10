@@ -250,27 +250,6 @@ func ErrorResponse(err error) (int, interface{}) {
 }
 
 // func where() traceRow {
-// 	pc, file, line, _ := runtime.Caller(2)
-// 	function := runtime.FuncForPC(pc).Name()
-
-// 	slashIndex := strings.LastIndex(function, "/")
-// 	function = function[slashIndex+1:]
-
-// 	s := strings.Split(function, ".")
-// 	packageName, function := s[0], s[1]
-
-// 	slashIndex = strings.LastIndex(file, "/")
-// 	fileName := file[slashIndex+1:]
-
-// 	return traceRow{
-// 		Package:  packageName,
-// 		File:     fileName,
-// 		Function: function,
-// 		Line:     line,
-// 	}
-// }
-
-// func where() traceRow {
 // 	// pc, file, line, _ := runtime.Caller(2)
 // 	// function := runtime.FuncForPC(pc).Name()
 
@@ -291,9 +270,16 @@ func ErrorResponse(err error) (int, interface{}) {
 // }
 
 func where() string {
+
 	pc, filename, line, _ := runtime.Caller(2)
 	trace := fmt.Sprintf("%s:%d", filename, line)
 	function := runtime.FuncForPC(pc).Name()
 
-	return fmt.Sprintf("%s %s", trace, function)
+	slashIndex := strings.LastIndex(function, "/")
+	function = function[slashIndex+1:]
+
+	s := strings.Split(function, ".")
+	packageName, function := s[0], s[1]
+
+	return fmt.Sprintf("%s %s %s", trace, packageName, function)
 }
