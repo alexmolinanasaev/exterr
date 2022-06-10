@@ -279,7 +279,9 @@ func where() string {
 	function = function[slashIndex+1:]
 
 	s := strings.Split(function, ".")
-	packageName, function := s[0], s[3]
+	packageName, function := s[0], s[2]
+
+	
 
 	return fmt.Sprintf("%s %s %s", trace, packageName, function)
 }
