@@ -281,24 +281,5 @@ func where() string {
 	s := strings.Split(function, ".")
 	packageName, function := s[0], s[2]
 
-	
-
-	return fmt.Sprintf("%s %s %s", trace, packageName, function)
-}
-
-func where2() string {
-
-	pc, filename, line, _ := runtime.Caller(2)
-	trace := fmt.Sprintf("%s:%d", filename, line)
-	function := runtime.FuncForPC(pc).Name()
-
-	slashIndex := strings.LastIndex(function, "/")
-	function = function[slashIndex+1:]
-
-	s := strings.Split(function, ".")
-	packageName, function := s[0], s[2]
-
-
-
 	return fmt.Sprintf("%s %s %s", trace, packageName, function)
 }
