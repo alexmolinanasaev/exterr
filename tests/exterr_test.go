@@ -11,6 +11,17 @@ func errMessage(expected interface{}, got interface{}) string {
 	return fmt.Sprintf("\nEXPECTED: %v\nGOT:      %v", expected, got)
 }
 
+func TestWrap(t *testing.T) {
+	err := fmt.Errorf("some err")
+	err1 := exterr.Wrap(err, "some err 1")
+	err2 := exterr.Wrap(err1, "some err 2")
+	err3 := some(err2)
+	fmt.Println(err3)
+	j := err3.(exterr.ErrExtender)
+	trace := j.TraceRawString()
+	fmt.Println(trace)
+}
+
 func TestNew(t *testing.T) {
 	for i, tt := range []struct {
 		in        string
@@ -145,90 +156,95 @@ func TestWrapAltMsg(t *testing.T) {
 	}
 }
 
-func TestTraceRawString(t *testing.T) {
-	for i, tt := range []struct {
-		out       string
-		isCorrect bool
-	}{
-		{"tests:exterr_test.go:TestTraceRawString:158/tests:exterr_test.go:TestTraceRawString:157", true},
-		{"", false},
-	} {
-		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			err2 := exterr.NewWithAlt("", "")
-			err := exterr.NewWithAlt("", "")
-			err.Wrap(err2)
-			result := err.TraceRawString()
+// func TestTraceRawString(t *testing.T) {
+// 	for i, tt := range []struct {
+// 		out       string
+// 		isCorrect bool
+// 	}{
+// 		{"tests:exterr_test.go:TestTraceRawString:158/tests:exterr_test.go:TestTraceRawString:157", true},
+// 		{"", false},
+// 	} {
+// 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+// 			err2 := exterr.NewWithAlt("", "")
+// 			err := exterr.NewWithAlt("", "")
+// 			err.Wrap(err2)
+// 			result := err.TraceRawString()
 
-			if (result == tt.out) != tt.isCorrect {
-				t.Error(errMessage(tt.out, result))
-			}
-		})
-	}
-}
-func TestTraceTagged(t *testing.T) {
-	for i, tt := range []struct {
-		out       string
-		isCorrect bool
-	}{
-		{"{pkg}tests:{file}exterr_test.go:{function}TestTraceTagged:{line}178/{pkg}tests:{file}exterr_test.go:{function}TestTraceTagged:{line}177", true},
-		{"", false},
-	} {
-		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			err2 := exterr.NewWithAlt("", "")
-			err := exterr.NewWithAlt("", "")
-			err.Wrap(err2)
-			result := err.TraceTagged()
+// 			if (result == tt.out) != tt.isCorrect {
+// 				t.Error(errMessage(tt.out, result))
+// 			}
+// 		})
+// 	}
+// }
+// func TestTraceTagged(t *testing.T) {
+// 	for i, tt := range []struct {
+// 		out       string
+// 		isCorrect bool
+// 	}{
+// 		{"{pkg}tests:{file}exterr_test.go:{function}TestTraceTagged:{line}178/{pkg}tests:{file}exterr_test.go:{function}TestTraceTagged:{line}177", true},
+// 		{"", false},
+// 	} {
+// 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+// 			err2 := exterr.NewWithAlt("", "")
+// 			err := exterr.NewWithAlt("", "")
+// 			err.Wrap(err2)
+// 			result := err.TraceTagged()
 
-			if (result == tt.out) != tt.isCorrect {
-				t.Error(errMessage(tt.out, result))
-			}
-		})
-	}
-}
-func TestTraceJSON(t *testing.T) {
-	for i, tt := range []struct {
-		out       string
-		isCorrect bool
-	}{
-		{"[{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"TestTraceJSON\",\"line\":198},{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"TestTraceJSON\",\"line\":197}]", true},
-		{"", false},
-	} {
-		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			err2 := exterr.NewWithAlt("", "")
-			err := exterr.NewWithAlt("", "")
-			err.Wrap(err2)
-			result := err.TraceJSON()
+// 			if (result == tt.out) != tt.isCorrect {
+// 				t.Error(errMessage(tt.out, result))
+// 			}
+// 		})
+// 	}
+// }
+// func TestTraceJSON(t *testing.T) {
+// 	for i, tt := range []struct {
+// 		out       string
+// 		isCorrect bool
+// 	}{
+// 		{"[{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"TestTraceJSON\",\"line\":198},{\"package\":\"tests\",\"file\":\"exterr_test.go\",\"function\":\"TestTraceJSON\",\"line\":197}]", true},
+// 		{"", false},
+// 	} {
+// 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+// 			err2 := exterr.NewWithAlt("", "")
+// 			err := exterr.NewWithAlt("", "")
+// 			err.Wrap(err2)
+// 			result := err.TraceJSON()
 
-			if (result == tt.out) != tt.isCorrect {
-				t.Error(errMessage(tt.out, result))
-			}
-		})
-	}
-}
+// 			if (result == tt.out) != tt.isCorrect {
+// 				t.Error(errMessage(tt.out, result))
+// 			}
+// 		})
+// 	}
+// }
 
-func TestTrace(t *testing.T) {
-	for i, tt := range []struct {
-		out       string
-		isCorrect bool
-	}{
-		{"tests:exterr_test.go:f3:232/tests:exterr_test.go:f2:229/tests:exterr_test.go:f1:228", true},
-		{"", false},
-	} {
-		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-			err := f1()
-			result := err.TraceRawString()
+// func TestTrace(t *testing.T) {
+// 	for i, tt := range []struct {
+// 		out       string
+// 		isCorrect bool
+// 	}{
+// 		{"tests:exterr_test.go:f3:232/tests:exterr_test.go:f2:229/tests:exterr_test.go:f1:228", true},
+// 		{"", false},
+// 	} {
+// 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+// 			err := f1()
+// 			result := err.TraceRawString()
 
-			if (result == tt.out) != tt.isCorrect {
-				t.Error(errMessage(tt.out, result))
-			}
-		})
-	}
-}
+// 			if (result == tt.out) != tt.isCorrect {
+// 				t.Error(errMessage(tt.out, result))
+// 			}
+// 		})
+// 	}
+// }
 
-func f1() exterr.ErrExtender { return f2().AddTraceRow() }
-func f2() exterr.ErrExtender { return f3().AddTraceRow().AddTraceRow() }
-func f3() exterr.ErrExtender {
-	return func() exterr.ErrExtender {
-		return exterr.New("").AddTraceRow()
-	}()
+// func f1() exterr.ErrExtender { return f2().AddTraceRow() }
+// func f2() exterr.ErrExtender { return f3().AddTraceRow().AddTraceRow() }
+// func f3() exterr.ErrExtender {
+// 	return func() exterr.ErrExtender {
+// 		return exterr.New("").AddTraceRow()
+// 	}()
+// }
+
+func some(err error) error {
+	er := exterr.Wrap(err, "sommmmmmmmmmme")
+	return er
 }
