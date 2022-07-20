@@ -28,23 +28,23 @@ func main() {
 	log.Println(LikeErr().Error())
 	fmt.Println()
 
-	err = TraceErr()
-	log.Println(err.Error())
-	log.Println(err.TraceTagged())
-	fmt.Println()
+	// err = TraceErr()
+	// log.Println(err.Error())
+	// log.Println(err.TraceTagged())
+	// fmt.Println()
 
-	err = Wrap()
-	log.Println(err.Error())
-	log.Println(err.TraceTagged())
-	e := exterr.New("wraping err")
-	e.Wrap(err)
-	log.Println(e.Error())
-	log.Println(e.TraceTagged())
-	fmt.Println()
+	// err = Wrap()
+	// log.Println(err.Error())
+	// log.Println(err.TraceTagged())
+	// e := exterr.New("wraping err")
+	// e.Wrap(err)
+	// log.Println(e.Error())
+	// log.Println(e.TraceTagged())
+	// fmt.Println()
 
-	log.Println(AddTraceExample().AddTraceRow().TraceJSON())
-	log.Println()
-	log.Println(exterr.New("TestError").SetErrCode(1000).TraceJSON())
+	// log.Println(AddTraceExample().AddTraceRow().TraceJSON())
+	// log.Println()
+	// log.Println(exterr.New("TestError").SetErrCode(1000).TraceJSON())
 }
 
 // is simple to create
@@ -78,10 +78,10 @@ func Wrap() exterr.ErrExtender {
 }
 
 // if error will be just passed higher you can add trace manually
-func AddTraceExample() exterr.ErrExtender {
-	return f1().AddTraceRow()
-}
+// func AddTraceExample() exterr.ErrExtender {
+// 	return f1().AddTraceRow()
+// }
 
-func f1() exterr.ErrExtender { return f2().AddTraceRow() }
-func f2() exterr.ErrExtender { return f3().AddTraceRow() }
-func f3() exterr.ErrExtender { return exterr.New("trace me") }
+// func f1() exterr.ErrExtender { return f2().AddTraceRow() }
+// func f2() exterr.ErrExtender { return f3().AddTraceRow() }
+// func f3() exterr.ErrExtender { return exterr.New("trace me") }

@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/alexmolinanasaev/exterr"
@@ -20,6 +21,12 @@ func TestWrap(t *testing.T) {
 	j := err3.(exterr.ErrExtender)
 	trace := j.TraceRawString()
 	fmt.Println(trace)
+
+	err5 := exterr.NewWithType("something went wrong in db", "cant get data", http.StatusNotFound)
+	js := err5.GetJsonFront()
+	fmt.Println(string(js))
+	fmt.Println(err5.TraceRawString())
+	fmt.Println(err5)
 }
 
 func TestNew(t *testing.T) {

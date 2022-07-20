@@ -3,6 +3,7 @@ package exterr
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"runtime"
 	"strings"
 )
@@ -17,11 +18,18 @@ type ErrExtender interface {
 	GetTraceRows() []string
 	AddMsg(msg string) ErrExtender
 	AddAltMsg(msg string) ErrExtender
+	GetJsonFront() []byte
 	// AddTraceRow() ErrExtender
 	// TraceTagged() string
 	// TraceJSON() string
 	TraceRawString() string
 	Wrap(w ErrExtender) ErrExtender
+}
+
+type jsonFront struct {
+	Err  string `json:"error"`
+	// msg  string `json:"msg"`
+	Code int    `json:"code"`
 }
 
 type extendedErr struct {
@@ -67,6 +75,25 @@ func (e *extendedErr) GetErrCode() int {
 
 func (e *extendedErr) GetTraceRows() []string {
 	return e.trace
+}
+
+func (e *extendedErr) GetJsonFront() []byte {
+	msg := e.altMsg
+	if msg == "" {
+		msg = "Internal server error"
+	}
+	code := e.errCode
+	if code == 0 {
+		code = http.StatusInternalServerError
+	}
+
+	front := jsonFront{
+		Err:  msg,
+		Code: code,
+	}
+
+	b, _ := json.Marshal(front)
+	return b
 }
 
 // AddMsg() add text to the beginning of the message
